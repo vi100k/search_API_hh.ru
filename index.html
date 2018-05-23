@@ -1,0 +1,60 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Поиск вакансий HH</title>
+<script src="//ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+</head>
+<body>
+Сегодня найдено вакансий: <span id="c"></span><br>
+<ul>Список:</ul>
+<script>
+$(document).ready(function() { 
+	var c=0;
+	$.ajax({
+            url: "/hh/search_1.php",
+            type: "POST",
+            success: function(res){
+                res = JSON.parse(res);
+                var i;
+                for (i = 0; i < res['found']; ++i) { /* Будут обрабатываться только 100 вакансий по сортировке от последнего. Причина описана в обработке запроса*/
+					if (res['items'][i]!=undefined)
+						var url = res['items'][i]['url'];
+					else continue;
+					$.ajax({
+						url: "/hh/search_2.php",
+						data: {"url": url},
+						type: "POST",
+						success: function(vac){
+							if (vac) {
+								vac = JSON.parse(vac);
+								var id = vac['id'];
+								var li = '<li id="'+id+'" onclick="view('+id+')">'+vac['name']+'</li>';
+								$('ul').append(li);
+								c=c+1;
+								$('#c').html(c);
+							}
+						}
+					});
+				} if (c==0) $('#c').html(c);
+            }
+	});
+});
+</script>
+<script>
+function view(url) {
+	$.ajax({
+		url: "/hh/open.php",
+		data: {"id": url},
+		type: "POST",
+		success: function(ok){
+			if (ok) {
+				$('#'+url).css({'color':'red'})
+				url = 'https://hh.ru/vacancy/' + url;
+				window.open(url);
+				}
+			}
+	});
+}
+</script>
+</body>
+</html>
